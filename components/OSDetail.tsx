@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { ServiceOrder, TabType, OSStatus } from '../types';
+import { ServiceOrder, TabType, OSStatus } from '../types.ts';
 import { ArrowLeft, Smartphone, MessageSquare, Camera, CheckSquare, X, DollarSign, FileText, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
-import { DeviceTab } from './tabs/DeviceTab';
-import { NotesTab } from './tabs/NotesTab';
-import { PhotosTab } from './tabs/PhotosTab';
-import { ChecklistTab } from './tabs/ChecklistTab';
+import { DeviceTab } from './tabs/DeviceTab.tsx';
+import { NotesTab } from './tabs/NotesTab.tsx';
+import { PhotosTab } from './tabs/PhotosTab.tsx';
+import { ChecklistTab } from './tabs/ChecklistTab.tsx';
 
 interface OSDetailProps {
   os: ServiceOrder;

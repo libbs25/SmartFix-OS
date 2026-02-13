@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { ServiceOrder } from '../../types';
+import { ServiceOrder } from '../../types.ts';
 import { Smartphone, Lock, AlertTriangle, Edit3, Save, X, Type, Grid3X3, KeyRound, Info, User, ChevronDown } from 'lucide-react';
-import { PatternGrid } from '../PatternGrid';
-import { DEVICE_DATA, BRANDS } from '../../data/deviceData';
+import { PatternGrid } from '../PatternGrid.tsx';
+import { DEVICE_DATA, BRANDS } from '../../data/deviceData.ts';
 
 interface DeviceTabProps {
   os: ServiceOrder;
@@ -168,44 +168,6 @@ export const DeviceTab: React.FC<DeviceTabProps> = ({ os, onUpdate }) => {
             </div>
           )}
         </div>
-
-        {editingField === 'password' && (
-          <div className="mb-6 animate-in slide-in-from-top duration-300">
-            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-3 justify-center">
-              <Info size={12} /> Escolha o tipo de bloqueio
-            </div>
-            <div className="flex gap-3">
-              <button 
-                type="button"
-                onClick={() => setFormData({...formData, passwordType: 'text', password: ''})}
-                className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-2xl transition-all border-2 ${
-                  formData.passwordType === 'text' 
-                    ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-md' 
-                    : 'bg-white border-slate-100 text-slate-400'
-                }`}
-              >
-                <div className={`p-2 rounded-full ${formData.passwordType === 'text' ? 'bg-blue-500 text-white' : 'bg-slate-100'}`}>
-                   <Type size={20} />
-                </div>
-                <span className="text-[11px] font-black uppercase">Texto / PIN</span>
-              </button>
-              <button 
-                type="button"
-                onClick={() => setFormData({...formData, passwordType: 'pattern', password: ''})}
-                className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-2xl transition-all border-2 ${
-                  formData.passwordType === 'pattern' 
-                    ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-md' 
-                    : 'bg-white border-slate-100 text-slate-400'
-                }`}
-              >
-                <div className={`p-2 rounded-full ${formData.passwordType === 'pattern' ? 'bg-blue-500 text-white' : 'bg-slate-100'}`}>
-                  <Grid3X3 size={20} />
-                </div>
-                <span className="text-[11px] font-black uppercase">Desenho Padrão</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className={`relative p-8 rounded-2xl min-h-[160px] flex flex-col items-center justify-center transition-all duration-300 ${
           editingField === 'password' ? 'bg-blue-50/50 border-2 border-dashed border-blue-200' : 'bg-slate-50 border border-slate-100'

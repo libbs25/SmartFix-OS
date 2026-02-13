@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { OSList } from './components/OSList';
-import { OSDetail } from './components/OSDetail';
-import { NewOSModal } from './components/NewOSModal';
-import { StoreProfile } from './components/StoreProfile';
-import { LoginScreen } from './components/LoginScreen';
-import { ServiceOrder, OSStatus } from './types';
-import { Language, t } from './i18n';
+import { OSList } from './components/OSList.tsx';
+import { OSDetail } from './components/OSDetail.tsx';
+import { NewOSModal } from './components/NewOSModal.tsx';
+import { StoreProfile } from './components/StoreProfile.tsx';
+import { LoginScreen } from './components/LoginScreen.tsx';
+import { ServiceOrder, OSStatus } from './types.ts';
+import { Language, t } from './i18n.ts';
 import { Search, Plus, LogOut, RefreshCcw, Wrench, AlertTriangle, X } from 'lucide-react';
 
 const MOCK_DATA: ServiceOrder[] = [
@@ -36,15 +36,34 @@ const MOCK_DATA: ServiceOrder[] = [
 ];
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('smartfix_auth') === 'true');
+  // Inicialização segura de estados com try-catch
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    try {
+      return localStorage.getItem('smartfix_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [orders, setOrders] = useState<ServiceOrder[]>(() => {
-    const saved = localStorage.getItem('smartfix_orders');
-    return saved ? JSON.parse(saved) : MOCK_DATA;
+    try {
+      const saved = localStorage.getItem('smartfix_orders');
+      if (!saved) return MOCK_DATA;
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : MOCK_DATA;
+    } catch (e) {
+      console.error("Erro ao carregar ordens:", e);
+      return MOCK_DATA;
+    }
   });
   
   const [nextOSConfig, setNextOSConfig] = useState<number>(() => {
-    const saved = localStorage.getItem('smartfix_next_os');
-    return saved ? parseInt(saved) : 5652;
+    try {
+      const saved = localStorage.getItem('smartfix_next_os');
+      return saved ? parseInt(saved, 10) : 5652;
+    } catch {
+      return 5652;
+    }
   });
 
   const [selectedOS, setSelectedOS] = useState<ServiceOrder | null>(null);
@@ -54,10 +73,38 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState<{message: string, type: 'warning'} | null>(null);
   
-  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('smartfix_lang') as Language) || 'Português');
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('smartfix_theme') === 'dark');
-  const [storePhoto, setStorePhoto] = useState<string | null>(() => localStorage.getItem('smartfix_store_photo'));
-  const [storeName, setStoreName] = useState<string>(() => localStorage.getItem('smartfix_store_name') || 'Jonatas');
+  const [language, setLanguage] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('smartfix_lang') as Language;
+      return (saved === 'Português' || saved === 'English') ? saved : 'Português';
+    } catch {
+      return 'Português';
+    }
+  });
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      return localStorage.getItem('smartfix_theme') === 'dark';
+    } catch {
+      return false;
+    }
+  });
+
+  const [storePhoto, setStorePhoto] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('smartfix_store_photo');
+    } catch {
+      return null;
+    }
+  });
+
+  const [storeName, setStoreName] = useState<string>(() => {
+    try {
+      return localStorage.getItem('smartfix_store_name') || 'Jonatas';
+    } catch {
+      return 'Jonatas';
+    }
+  });
 
   useEffect(() => {
     localStorage.setItem('smartfix_orders', JSON.stringify(orders));
@@ -108,18 +155,22 @@ const App: React.FC = () => {
   };
 
   const filteredOrders = useMemo(() => {
+    if (!Array.isArray(orders)) return [];
     return orders.filter(o => {
+      const safeCustomerName = o.customerName || '';
+      const safeOSNumber = o.osNumber || '';
+      const safeModel = o.model || '';
+
       const matchesSearch = 
-        o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.osNumber.includes(searchTerm) ||
-        o.model.toLowerCase().includes(searchTerm.toLowerCase());
+        safeCustomerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        safeOSNumber.includes(searchTerm) ||
+        safeModel.toLowerCase().includes(searchTerm.toLowerCase());
       
       if (!matchesSearch) return false;
       
       if (activeFilter === 'Em Aberto') return o.status === OSStatus.READY;
       if (activeFilter === 'Adiantados') return o.status === OSStatus.OPEN;
       
-      // "Todas" exibe tudo exceto o que já foi entregue (Histórico)
       return o.status !== OSStatus.DELIVERED;
     });
   }, [orders, searchTerm, activeFilter]);
