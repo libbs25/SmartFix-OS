@@ -45,7 +45,10 @@ export const translations = {
     verifyCodeLabel: 'Código de Verificação',
     confirmCode: 'Confirmar Código',
     resendCode: 'Reenviar código em',
-    codeError: 'Código inválido ou expirado.'
+    codeError: 'Código inválido ou expirado.',
+    biometricLogin: 'Login Biométrico',
+    biometricScanning: 'Escaneando...',
+    receiveWhatsApp: 'Receber via WhatsApp'
   },
   'English': {
     myOs: 'My SO',
@@ -90,7 +93,10 @@ export const translations = {
     verifyCodeLabel: 'Verification Code',
     confirmCode: 'Confirm Code',
     resendCode: 'Resend code in',
-    codeError: 'Invalid or expired code.'
+    codeError: 'Invalid or expired code.',
+    biometricLogin: 'Biometric Login',
+    biometricScanning: 'Scanning...',
+    receiveWhatsApp: 'Get via WhatsApp'
   }
 };
 

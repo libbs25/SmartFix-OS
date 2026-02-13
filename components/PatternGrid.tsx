@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface PatternGridProps {
   pattern: string;
@@ -8,112 +8,160 @@ interface PatternGridProps {
 }
 
 export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChange, isEditing }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [currentPos, setCurrentPos] = useState<{ x: number, y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   const points = Array.from({ length: 9 }, (_, i) => i + 1);
   const selectedPoints = pattern ? pattern.split(',').map(Number) : [];
-
-  const handlePointClick = (point: number) => {
-    if (!isEditing || !onPatternChange) return;
-    
-    let newSelected;
-    if (selectedPoints.includes(point)) {
-      const index = selectedPoints.indexOf(point);
-      // Se clicar em um ponto já selecionado, mantém até aquele ponto para facilitar correções
-      newSelected = selectedPoints.slice(0, index + 1);
-      // Se clicou no último, remove para permitir "backspace"
-      if (newSelected.length === selectedPoints.length) {
-         newSelected = selectedPoints.slice(0, index);
-      }
-    } else {
-      newSelected = [...selectedPoints, point];
-    }
-    onPatternChange(newSelected.join(','));
-  };
 
   const getPointCoords = (point: number) => {
     const row = Math.floor((point - 1) / 3);
     const col = (point - 1) % 3;
-    // Coordenadas ajustadas para um grid 3x3 em um SVG de 200x200
-    return { x: col * 60 + 40, y: row * 60 + 40 };
+    // Baseado em um container de 210px (70px por célula)
+    return { x: col * 70 + 35, y: row * 70 + 35 };
   };
 
+  const getPointFromCoords = (x: number, y: number) => {
+    if (!containerRef.current) return null;
+    const rect = containerRef.current.getBoundingClientRect();
+    const relX = x - rect.left;
+    const relY = y - rect.top;
+
+    // Verifica cada ponto para ver se o dedo está perto do centro (raio de 25px)
+    for (let i = 1; i <= 9; i++) {
+      const pCoord = getPointCoords(i);
+      const dist = Math.sqrt(Math.pow(relX - pCoord.x, 2) + Math.pow(relY - pCoord.y, 2));
+      if (dist < 25) return i;
+    }
+    return null;
+  };
+
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isEditing || !onPatternChange) return;
+    
+    const touch = 'touches' in e ? e.touches[0] : e;
+    const point = getPointFromCoords(touch.clientX, touch.clientY);
+    
+    setIsDragging(true);
+    if (point) {
+      onPatternChange(point.toString());
+      if ('vibrate' in navigator) navigator.vibrate(10);
+    }
+    
+    updateCurrentPos(e);
+  };
+
+  const updateCurrentPos = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const touch = 'touches' in e ? e.touches[0] : e;
+    const rect = containerRef.current.getBoundingClientRect();
+    setCurrentPos({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    });
+  };
+
+  const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDragging || !isEditing || !onPatternChange) return;
+    
+    updateCurrentPos(e);
+    const touch = 'touches' in e ? e.touches[0] : e;
+    const point = getPointFromCoords(touch.clientX, touch.clientY);
+    
+    if (point && !selectedPoints.includes(point)) {
+      const newPattern = [...selectedPoints, point].join(',');
+      onPatternChange(newPattern);
+      if ('vibrate' in navigator) navigator.vibrate(10);
+    }
+  };
+
+  const handleEnd = () => {
+    setIsDragging(false);
+    setCurrentPos(null);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchend', handleEnd);
+    }
+    return () => {
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, [isDragging]);
+
   return (
-    <div className={`relative w-[200px] h-[200px] mx-auto select-none p-4 rounded-3xl border transition-all ${
-      isEditing ? 'bg-white shadow-lg border-blue-100' : 'bg-slate-100/50 border-slate-200'
-    }`}>
+    <div 
+      ref={containerRef}
+      onMouseDown={handleStart}
+      onTouchStart={handleStart}
+      onMouseMove={handleMove}
+      onTouchMove={handleMove}
+      className={`relative w-[210px] h-[210px] mx-auto select-none touch-none rounded-3xl ${
+        isEditing ? 'bg-blue-50/20 shadow-inner border border-blue-100/50' : ''
+      }`}
+    >
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
-        <defs>
-          <marker
-            id="arrow"
-            viewBox="0 0 10 10"
-            refX="8"
-            refY="5"
-            markerWidth="3"
-            markerHeight="3"
-            orient="auto-start-reverse"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill={isEditing ? "#3b82f6" : "#94a3b8"} />
-          </marker>
-        </defs>
+        {/* Linhas conectadas */}
         {selectedPoints.map((point, i) => {
           if (i === 0) return null;
           const start = getPointCoords(selectedPoints[i - 1]);
           const end = getPointCoords(point);
-          
-          const dx = end.x - start.x;
-          const dy = end.y - start.y;
-          const angle = Math.atan2(dy, dx);
-          const distance = Math.sqrt(dx*dx + dy*dy);
-          const shortDistance = distance - 15; 
-          
-          const lineEndX = start.x + Math.cos(angle) * shortDistance;
-          const lineEndY = start.y + Math.sin(angle) * shortDistance;
+          const midX = (start.x + end.x) / 2;
+          const midY = (start.y + end.y) / 2;
+          const angle = Math.atan2(end.y - start.y, end.x - start.x);
 
           return (
-            <line
-              key={`line-${i}`}
-              x1={start.x}
-              y1={start.y}
-              x2={lineEndX}
-              y2={lineEndY}
-              stroke={isEditing ? "#3b82f6" : "#94a3b8"}
-              strokeWidth="4"
-              strokeLinecap="round"
-              markerEnd="url(#arrow)"
-              className="opacity-40 transition-all duration-300"
-            />
+            <g key={`line-${i}`}>
+              <line
+                x1={start.x} y1={start.y}
+                x2={end.x} y2={end.y}
+                stroke="#086788"
+                strokeWidth="8"
+                strokeLinecap="round"
+              />
+              <path 
+                d="M -4 -4 L 4 0 L -4 4 z" 
+                fill="#ffffff"
+                transform={`translate(${midX}, ${midY}) rotate(${angle * 180 / Math.PI})`}
+              />
+            </g>
           );
         })}
+
+        {/* Linha "elástica" que segue o dedo */}
+        {isDragging && selectedPoints.length > 0 && currentPos && (
+          <line
+            x1={getPointCoords(selectedPoints[selectedPoints.length - 1]).x}
+            y1={getPointCoords(selectedPoints[selectedPoints.length - 1]).y}
+            x2={currentPos.x}
+            y2={currentPos.y}
+            stroke="#086788"
+            strokeWidth="4"
+            strokeDasharray="4 4"
+            opacity="0.5"
+          />
+        )}
       </svg>
-      <div className="grid grid-cols-3 gap-4 h-full w-full relative z-10">
+
+      <div className="grid grid-cols-3 h-full w-full relative z-10 pointer-events-none">
         {points.map((point) => {
           const isSelected = selectedPoints.includes(point);
           const isLast = selectedPoints[selectedPoints.length - 1] === point;
-          const order = selectedPoints.indexOf(point) + 1;
           
           return (
-            <div
-              key={point}
-              onClick={() => handlePointClick(point)}
-              className="flex items-center justify-center relative cursor-pointer"
-            >
+            <div key={point} className="flex items-center justify-center">
               <div
-                className={`w-10 h-10 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                className={`w-14 h-14 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
                   isSelected
-                    ? isEditing 
-                      ? 'bg-blue-500 border-blue-600 scale-110 shadow-lg ring-4 ring-blue-50' 
-                      : 'bg-slate-500 border-slate-600'
-                    : 'border-slate-200 bg-white hover:border-blue-300'
+                    ? 'border-[#086788] bg-[#086788] scale-110 shadow-lg'
+                    : 'border-[#92d5e6] bg-white/50'
                 }`}
               >
                 {isSelected && (
-                  <div className={`w-3 h-3 rounded-full bg-white ${isLast && isEditing ? 'animate-pulse' : ''}`} />
-                )}
-                
-                {/* Indicador de ordem numérica para facilitar o cadastro */}
-                {isSelected && isEditing && (
-                  <span className="absolute -top-1 -right-1 bg-blue-700 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-black shadow-sm z-20">
-                    {order}
-                  </span>
+                  <div className={`w-2 h-2 rounded-full bg-white ${isLast && isEditing ? 'animate-ping' : ''}`} />
                 )}
               </div>
             </div>
@@ -121,16 +169,14 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
         })}
       </div>
       
-      {isEditing && (
-        <div className="absolute -bottom-12 left-0 right-0 flex justify-center">
-           <button 
-            type="button"
-            onClick={() => onPatternChange?.('')}
-            className="text-[10px] text-red-500 font-black uppercase tracking-widest bg-red-50 px-4 py-1.5 rounded-full border border-red-100 active:scale-95 transition-all shadow-sm"
-          >
-            Limpar Padrão
-          </button>
-        </div>
+      {isEditing && selectedPoints.length > 0 && (
+        <button 
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onPatternChange?.(''); }}
+          className="absolute -bottom-12 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-50 text-red-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 shadow-sm whitespace-nowrap active:scale-95 transition-all"
+        >
+          LIMPAR DESENHO
+        </button>
       )}
     </div>
   );

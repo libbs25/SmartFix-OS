@@ -210,7 +210,7 @@ export const NewOSModal: React.FC<NewOSModalProps> = ({ onClose, onSave, osNumbe
               </div>
             </div>
 
-            {/* SELEÇÃO DE SENHA NA CRIAÇÃO */}
+            {/* SELEÇÃO DE SENHA NA CRIAÇÃO (Sempre Visível) */}
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-2 mb-4">
                 <Lock size={16} className="text-slate-400" />
@@ -234,12 +234,15 @@ export const NewOSModal: React.FC<NewOSModalProps> = ({ onClose, onSave, osNumbe
               </div>
 
               {formData.passwordType === 'text' ? (
-                <input 
-                  className={`${inputClasses} text-center tracking-[0.2em] font-black h-14`}
-                  placeholder="DIGITE A SENHA"
-                  value={formData.password}
-                  onChange={e => setFormData({...formData, password: e.target.value})}
-                />
+                <div className="relative">
+                  <input 
+                    type="text"
+                    className={`${inputClasses} text-center tracking-[0.2em] font-black h-14 uppercase`}
+                    placeholder="DIGITE A SENHA"
+                    value={formData.password}
+                    onChange={e => setFormData({...formData, password: e.target.value})}
+                  />
+                </div>
               ) : (
                 <div className="flex justify-center py-2">
                   <PatternGrid 

@@ -21,11 +21,22 @@ export const OSDetail: React.FC<OSDetailProps> = ({ os, onBack, onUpdate }) => {
   const [paymentStatus, setPaymentStatus] = useState<'pago' | 'pendente'>('pago');
 
   const tabs = [
-    { id: 'device' as TabType, label: 'Aparelho', icon: Smartphone },
-    { id: 'notes' as TabType, label: 'Observações', icon: MessageSquare },
-    { id: 'photos' as TabType, label: 'Fotos', icon: Camera },
-    { id: 'checklist' as TabType, label: 'Checklist', icon: CheckSquare },
+    { id: 'device' as TabType, label: 'APARELHO', icon: Smartphone },
+    { id: 'notes' as TabType, label: 'OBSERVAÇÕES', icon: MessageSquare },
+    { id: 'photos' as TabType, label: 'FOTOS', icon: Camera },
+    { id: 'checklist' as TabType, label: 'CHECKLIST', icon: CheckSquare },
   ];
+
+  const getStatusBadgeStyles = (status: OSStatus) => {
+    switch (status) {
+      case OSStatus.DELIVERED: return 'bg-emerald-500 text-white';
+      case OSStatus.READY: return 'bg-blue-500 text-white';
+      case OSStatus.OPEN: return 'bg-purple-600 text-white';
+      case OSStatus.MAINTENANCE: return 'bg-orange-500 text-white';
+      case OSStatus.WAITING_PARTS: return 'bg-rose-500 text-white';
+      default: return 'bg-slate-400 text-white';
+    }
+  };
 
   const handleFinish = () => {
     onUpdate({
@@ -40,10 +51,7 @@ export const OSDetail: React.FC<OSDetailProps> = ({ os, onBack, onUpdate }) => {
   };
 
   const handleSetPriority = () => {
-    onUpdate({
-      ...os,
-      status: OSStatus.OPEN
-    });
+    onUpdate({ ...os, status: OSStatus.OPEN });
     onBack();
   };
 
@@ -59,76 +67,65 @@ export const OSDetail: React.FC<OSDetailProps> = ({ os, onBack, onUpdate }) => {
 
   if (showFinishForm) {
     return (
-      <div className="flex flex-col h-screen bg-white p-6 animate-in slide-in-from-bottom duration-300">
+      <div className="flex flex-col h-screen bg-white p-6 animate-in slide-in-from-bottom duration-300 z-50">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-xl font-bold text-gray-800">Finalizar OS #{os.osNumber}</h2>
-          <button onClick={() => setShowFinishForm(false)} className="p-2 text-gray-400">
+          <h2 className="text-xl font-bold text-slate-800">Finalizar OS #{os.osNumber}</h2>
+          <button onClick={() => setShowFinishForm(false)} className="p-2 text-slate-400">
             <X size={24} />
           </button>
         </div>
 
         <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <DollarSign size={14} className="text-green-500" />
-              Valor Total do Conserto (R$)
+              VALOR DO CONSERTO (R$)
             </label>
             <input 
               type="number" 
               placeholder="0,00"
-              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-xl font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-2xl font-black text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-inner"
               value={finalCost}
               onChange={(e) => setFinalCost(e.target.value)}
             />
           </div>
 
           <div className="space-y-3">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Status do Pagamento</label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">STATUS DO PAGAMENTO</label>
             <div className="flex gap-3">
               <button 
                 onClick={() => setPaymentStatus('pago')}
                 className={`flex-1 py-4 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all ${
                   paymentStatus === 'pago' 
                     ? 'bg-green-50 border-green-500 text-green-700 shadow-md' 
-                    : 'bg-white border-gray-100 text-gray-400'
+                    : 'bg-white border-slate-100 text-slate-400'
                 }`}
               >
-                <CheckCircle2 size={24} className={paymentStatus === 'pago' ? 'text-green-500' : 'text-gray-200'} />
-                <span className="text-xs font-black uppercase">Pago</span>
+                <CheckCircle2 size={24} className={paymentStatus === 'pago' ? 'text-green-500' : 'text-slate-200'} />
+                <span className="text-[10px] font-black uppercase">Já Pago</span>
               </button>
               <button 
                 onClick={() => setPaymentStatus('pendente')}
                 className={`flex-1 py-4 rounded-2xl border-2 flex flex-col items-center gap-1 transition-all ${
                   paymentStatus === 'pendente' 
                     ? 'bg-amber-50 border-amber-500 text-amber-700 shadow-md' 
-                    : 'bg-white border-gray-100 text-gray-400'
+                    : 'bg-white border-slate-100 text-slate-400'
                 }`}
               >
-                <AlertCircle size={24} className={paymentStatus === 'pendente' ? 'text-amber-500' : 'text-gray-200'} />
-                <span className="text-xs font-black uppercase">Não Pago</span>
+                <AlertCircle size={24} className={paymentStatus === 'pendente' ? 'text-amber-500' : 'text-slate-200'} />
+                <span className="text-[10px] font-black uppercase">Pendente</span>
               </button>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-              <FileText size={14} className="text-blue-500" />
-              Resumo do Trabalho / Peças (Opcional)
-            </label>
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">RESUMO DO SERVIÇO</label>
             <textarea 
-              placeholder="Ex: Trocada tela original e bateria. Realizada limpeza preventiva."
-              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+              placeholder="Ex: Troca de frontal e limpeza..."
+              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm min-h-[120px] focus:ring-2 focus:ring-blue-500 outline-none resize-none"
               value={finalSummary}
               onChange={(e) => setFinalSummary(e.target.value)}
             />
-          </div>
-
-          <div className={`${paymentStatus === 'pago' ? 'bg-blue-50 border-blue-100 text-blue-700' : 'bg-amber-50 border-amber-100 text-amber-700'} p-4 rounded-xl border`}>
-            <p className="text-xs leading-relaxed font-medium">
-              {paymentStatus === 'pago' 
-                ? 'Ao confirmar como PAGO, esta ordem será marcada como ENTREGUE e movida para o Histórico.'
-                : 'Ao confirmar como NÃO PAGO, esta ordem ficará EM ABERTO aguardando o acerto do cliente.'}
-            </p>
           </div>
         </div>
 
@@ -136,59 +133,53 @@ export const OSDetail: React.FC<OSDetailProps> = ({ os, onBack, onUpdate }) => {
           onClick={handleFinish}
           disabled={!finalCost}
           className={`w-full py-5 text-white rounded-[1.5rem] font-black shadow-lg transition-all mt-6 uppercase text-sm tracking-widest ${
-            !finalCost ? 'bg-gray-300 cursor-not-allowed' : (paymentStatus === 'pago' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700')
+            !finalCost ? 'bg-slate-300 cursor-not-allowed' : (paymentStatus === 'pago' ? 'bg-green-600' : 'bg-blue-600')
           }`}
         >
-          Confirmar {paymentStatus === 'pago' ? 'Entrega e Recebimento' : 'Conclusão (Pendente)'}
+          CONFIRMAR CONCLUSÃO
         </button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      <div className="p-4 border-b border-gray-100">
+    <div className="flex flex-col h-screen bg-slate-50">
+      <div className="p-4 bg-white border-b border-slate-100">
         <div className="flex items-center justify-between mb-2">
-          <button onClick={onBack} className="p-1 -ml-1 text-gray-500 hover:text-gray-800">
+          <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-800 transition-colors">
             <ArrowLeft size={24} />
           </button>
-          <div className="flex gap-2">
-            <span className="text-lg font-bold text-gray-800">{os.osNumber}</span>
-            <span className={`px-3 py-0.5 rounded-full text-[10px] font-bold self-center uppercase ${
-              os.status === OSStatus.DELIVERED ? 'bg-green-100 text-green-600' : (os.status === OSStatus.READY ? 'bg-amber-100 text-amber-600' : (os.status === OSStatus.OPEN ? 'bg-blue-600 text-white' : 'bg-orange-100 text-orange-600'))
-            }`}>
-              {os.status === OSStatus.OPEN ? 'Adiantado' : os.status}
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-black text-slate-800 tracking-tight">#{os.osNumber}</span>
+            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${getStatusBadgeStyles(os.status)} shadow-sm`}>
+              {os.status}
             </span>
           </div>
-          <button onClick={onBack} className="p-1 -mr-1 text-gray-400">
+          <button onClick={onBack} className="p-2 -mr-2 text-slate-300">
             <X size={24} />
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          <p className="text-xs text-gray-400 font-medium">
-            {os.brand} {os.model} • {os.customerName}
+        <div className="flex flex-col items-center justify-center pt-1">
+          <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.15em]">
+            {os.brand} {os.model} <span className="mx-2 text-slate-200">•</span> {os.customerName}
           </p>
-          {os.paymentStatus && (
-            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${os.paymentStatus === 'pago' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-              {os.paymentStatus}
-            </span>
-          )}
         </div>
       </div>
 
-      <div className="flex border-b border-gray-100 bg-gray-50">
+      <div className="flex bg-white border-b border-slate-100 px-2 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-3 px-1 flex flex-col items-center gap-1 transition-all ${
+            className={`flex-1 py-4 flex flex-col items-center gap-1.5 min-w-[80px] transition-all relative ${
               activeTab === tab.id 
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-white' 
-                : 'text-gray-400'
+                ? 'text-blue-600' 
+                : 'text-slate-400'
             }`}
           >
             <tab.icon size={18} />
-            <span className="text-[10px] font-semibold">{tab.label}</span>
+            <span className="text-[9px] font-black tracking-widest">{tab.label}</span>
+            {activeTab === tab.id && <div className="absolute bottom-0 left-2 right-2 h-1 bg-blue-600 rounded-t-full shadow-[0_0_10px_rgba(37,99,235,0.4)]" />}
           </button>
         ))}
       </div>
@@ -198,47 +189,20 @@ export const OSDetail: React.FC<OSDetailProps> = ({ os, onBack, onUpdate }) => {
       </div>
 
       {os.status !== OSStatus.DELIVERED && (
-        <div className="p-4 bg-white border-t border-gray-100 grid grid-cols-2 gap-3">
-          {os.status !== OSStatus.OPEN && (
-            <button 
-              onClick={handleSetPriority}
-              className="py-4 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl font-bold shadow-sm hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <Zap size={20} className="fill-amber-500" />
-              Adiantar
-            </button>
-          )}
+        <div className="p-5 bg-white border-t border-slate-100 grid grid-cols-2 gap-4 pb-8">
           <button 
-            onClick={() => setShowFinishForm(true)}
-            className={`${os.status === OSStatus.OPEN ? 'col-span-2' : 'col-span-1'} py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2`}
+            onClick={handleSetPriority}
+            className="py-4 bg-purple-50 text-purple-700 border border-purple-100 rounded-2xl font-black uppercase text-xs tracking-widest shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
           >
-            <CheckSquare size={20} />
-            Finalizar
+            <Zap size={18} className="fill-purple-500" />
+            PRIORIDADE
           </button>
-        </div>
-      )}
-      
-      {os.status === OSStatus.DELIVERED && os.cost && (
-        <div className="p-4 bg-green-50 border-t border-green-100 flex justify-between items-center">
-          <div className="flex items-center gap-2 text-green-700">
-            <DollarSign size={20} />
-            <span className="font-bold">Conserto Finalizado e Pago</span>
-          </div>
-          <span className="text-xl font-black text-green-800">R$ {os.cost.toFixed(2)}</span>
-        </div>
-      )}
-
-      {os.status === OSStatus.READY && os.paymentStatus === 'pendente' && (
-        <div className="p-4 bg-amber-50 border-t border-amber-100 flex justify-between items-center">
-          <div className="flex items-center gap-2 text-amber-700">
-            <AlertCircle size={20} />
-            <span className="font-bold">Aguardando Pagamento</span>
-          </div>
           <button 
             onClick={() => setShowFinishForm(true)}
-            className="px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-black uppercase shadow-sm"
+            className="py-4 bg-[#2563eb] text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
           >
-            Receber R$ {os.cost?.toFixed(2)}
+            <CheckSquare size={18} />
+            FINALIZAR
           </button>
         </div>
       )}

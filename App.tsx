@@ -36,7 +36,6 @@ const MOCK_DATA: ServiceOrder[] = [
 ];
 
 const App: React.FC = () => {
-  // Inicialização segura de estados com try-catch
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     try {
       return localStorage.getItem('smartfix_auth') === 'true';
@@ -100,9 +99,9 @@ const App: React.FC = () => {
 
   const [storeName, setStoreName] = useState<string>(() => {
     try {
-      return localStorage.getItem('smartfix_store_name') || 'Jonatas';
+      return localStorage.getItem('smartfix_store_name') || 'Minha Loja';
     } catch {
-      return 'Jonatas';
+      return 'Minha Loja';
     }
   });
 
@@ -127,7 +126,11 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleLogin = () => {
+  const handleLogin = (name?: string) => {
+    if (name) {
+      setStoreName(name);
+      localStorage.setItem('smartfix_store_name', name);
+    }
     setIsLoggedIn(true);
     localStorage.setItem('smartfix_auth', 'true');
   };

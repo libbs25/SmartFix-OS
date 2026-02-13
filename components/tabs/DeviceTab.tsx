@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { ServiceOrder } from '../../types.ts';
-import { Smartphone, Lock, AlertTriangle, Edit3, Save, X, Type, Grid3X3, KeyRound, Info, User, ChevronDown } from 'lucide-react';
+import { Smartphone, Lock, AlertTriangle, Edit3, Save, X, KeyRound, User, ChevronDown, Type, Grid3X3, Check } from 'lucide-react';
 import { PatternGrid } from '../PatternGrid.tsx';
 import { DEVICE_DATA, BRANDS } from '../../data/deviceData.ts';
 
@@ -40,154 +40,71 @@ export const DeviceTab: React.FC<DeviceTabProps> = ({ os, onUpdate }) => {
     setEditingField('none');
   };
 
-  const modelsForSelectedBrand = useMemo(() => {
-    if (!formData.brand) return [];
-    const brandKey = Object.keys(DEVICE_DATA).find(k => k.toLowerCase() === formData.brand.toLowerCase());
-    return brandKey ? DEVICE_DATA[brandKey] : [];
-  }, [formData.brand]);
-
-  const inputClasses = "w-full bg-white border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all appearance-none";
   const labelClasses = "text-[10px] font-bold text-slate-400 uppercase mb-1 block tracking-wider";
 
   return (
-    <div className="p-4 space-y-6 bg-slate-50 min-h-full animate-in fade-in duration-300 pb-20">
+    <div className="p-4 space-y-6 bg-slate-50 min-h-full animate-in fade-in duration-300 pb-32">
       
-      {/* SEÇÃO DO CLIENTE */}
-      <section className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center shrink-0">
-          {os.customerPhoto ? (
-            <img src={os.customerPhoto} className="w-full h-full object-cover" alt="Cliente" />
-          ) : (
-            <User className="text-slate-200" size={32} />
-          )}
-        </div>
-        <div>
-          <label className={labelClasses}>Cliente Responsável</label>
-          <p className="text-base font-black text-slate-800">{os.customerName}</p>
-          <p className="text-[10px] text-blue-600 font-bold uppercase tracking-tight">Identificado via foto</p>
-        </div>
-      </section>
-
-      {/* SEÇÃO INFORMAÇÕES DO APARELHO */}
-      <section className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between mb-4">
+      {/* SEÇÃO DA SENHA */}
+      <section className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2 text-slate-700">
-            <Smartphone size={18} className="text-blue-500" />
-            <h3 className="font-bold text-sm">Dispositivo</h3>
-          </div>
-          {editingField !== 'info' ? (
-            <button onClick={() => setEditingField('info')} className="text-blue-600 p-2 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
-              <Edit3 size={18} />
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button onClick={handleCancel} className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl"><X size={20} /></button>
-              <button onClick={handleSave} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl"><Save size={20} /></button>
+            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+              <Lock size={16} />
             </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={labelClasses}>Tipo</label>
-            {editingField === 'info' ? (
-              <input className={inputClasses} value={formData.deviceType} onChange={(e) => setFormData({...formData, deviceType: e.target.value})} />
-            ) : (
-              <p className="text-sm font-semibold text-slate-800 capitalize">{os.deviceType}</p>
-            )}
-          </div>
-          <div>
-            <label className={labelClasses}>Marca</label>
-            {editingField === 'info' ? (
-              <div className="relative">
-                <input 
-                  list="edit-brands-list"
-                  className={inputClasses} 
-                  value={formData.brand} 
-                  onChange={(e) => setFormData({...formData, brand: e.target.value, model: ''})} 
-                />
-                <datalist id="edit-brands-list">
-                  {BRANDS.map(brand => <option key={brand} value={brand} />)}
-                </datalist>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
-                  <ChevronDown size={14} />
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm font-semibold text-slate-800">{os.brand}</p>
-            )}
-          </div>
-          <div className="col-span-2">
-            <label className={labelClasses}>Modelo</label>
-            {editingField === 'info' ? (
-              <div className="relative">
-                <input 
-                  list="edit-models-list"
-                  className={inputClasses} 
-                  value={formData.model} 
-                  onChange={(e) => setFormData({...formData, model: e.target.value})} 
-                />
-                <datalist id="edit-models-list">
-                  {modelsForSelectedBrand.map(model => <option key={model} value={model} />)}
-                </datalist>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
-                  <ChevronDown size={14} />
-                </div>
-              </div>
-            ) : (
-              <p className="text-base font-bold text-slate-900">{os.model}</p>
-            )}
-          </div>
-          <div className="col-span-2">
-            <label className={labelClasses}>IMEI / Serial</label>
-            {editingField === 'info' ? (
-              <input className={inputClasses} value={formData.imei} onChange={(e) => setFormData({...formData, imei: e.target.value})} />
-            ) : (
-              <p className="text-sm font-medium text-slate-500 font-mono tracking-tight">{os.imei}</p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO DA SENHA - ATUALIZADA */}
-      <section className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-slate-700">
-            <Lock size={18} className="text-slate-400" />
-            <h3 className="font-bold text-sm">Senha do Cliente</h3>
+            <h3 className="font-bold text-sm">Bloqueio do Aparelho</h3>
           </div>
           {editingField !== 'password' ? (
-            <button onClick={() => setEditingField('password')} className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all shadow-sm border border-slate-200">
-              <KeyRound size={14} className="text-blue-500" />
-              Editar Senha
+            <button 
+              onClick={() => setEditingField('password')} 
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black border border-blue-100 uppercase tracking-widest shadow-sm active:scale-95 transition-all"
+            >
+              <KeyRound size={14} />
+              Redefinir
             </button>
           ) : (
             <div className="flex gap-2">
               <button onClick={handleCancel} className="p-2 text-slate-400"><X size={20} /></button>
-              <button onClick={handleSave} className="px-4 py-1.5 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase shadow-md hover:bg-blue-700 transition-all">Salvar</button>
+              <button onClick={handleSave} className="px-5 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">OK</button>
             </div>
           )}
         </div>
 
-        <div className={`relative p-8 rounded-2xl min-h-[160px] flex flex-col items-center justify-center transition-all duration-300 ${
-          editingField === 'password' ? 'bg-blue-50/50 border-2 border-dashed border-blue-200' : 'bg-slate-50 border border-slate-100'
-        }`}>
+        {editingField === 'password' && (
+          <div className="flex gap-2 mb-8 animate-in slide-in-from-top duration-300">
+            <button 
+              onClick={() => setFormData({...formData, passwordType: 'text', password: ''})}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 border transition-all ${formData.passwordType === 'text' ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100'}`}
+            >
+              <Type size={14} /> Teclado
+            </button>
+            <button 
+              onClick={() => setFormData({...formData, passwordType: 'pattern', password: ''})}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 border transition-all ${formData.passwordType === 'pattern' ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100'}`}
+            >
+              <Grid3X3 size={14} /> Padrão
+            </button>
+          </div>
+        )}
+
+        <div className="relative min-h-[220px] flex flex-col items-center justify-center">
           {formData.passwordType === 'text' ? (
             editingField === 'password' ? (
-              <div className="w-full max-w-[240px]">
-                <input 
-                  className="w-full bg-white p-4 rounded-xl border border-blue-200 text-center text-3xl font-black text-slate-800 tracking-[0.3em] outline-none shadow-inner"
-                  value={formData.password}
-                  placeholder="----"
-                  autoFocus
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                />
-              </div>
+              <input 
+                type="text"
+                className="w-full max-w-[240px] bg-slate-50 p-5 rounded-2xl border-2 border-blue-100 text-center text-4xl font-black text-blue-600 tracking-[0.3em] outline-none shadow-inner uppercase"
+                value={formData.password}
+                placeholder="----"
+                autoFocus
+                onChange={(e) => setFormData({...formData, password: e.target.value.toUpperCase()})}
+              />
             ) : (
-              <p className="text-3xl font-black text-slate-700 tracking-[0.4em]">{os.password || '---'}</p>
+              <p className="text-[2.75rem] font-black text-[#2563eb] tracking-[0.25em] uppercase text-center w-full break-all leading-tight">
+                {os.password ? os.password : '---'}
+              </p>
             )
           ) : (
-            <div className="py-2">
+            <div className="py-4">
               <PatternGrid 
                 pattern={editingField === 'password' ? formData.password : (os.password || '')} 
                 isEditing={editingField === 'password'}
@@ -195,45 +112,61 @@ export const DeviceTab: React.FC<DeviceTabProps> = ({ os, onUpdate }) => {
               />
             </div>
           )}
-          
-          {!editingField && !os.password && (
-            <p className="text-[10px] text-slate-400 mt-4 font-bold uppercase tracking-tighter">Nenhuma senha cadastrada</p>
-          )}
         </div>
       </section>
 
       {/* DEFEITO RELATADO */}
-      <section className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+      <section className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 text-red-500">
-            <AlertTriangle size={18} />
+            <div className="p-1.5 bg-red-50 rounded-lg">
+              <AlertTriangle size={16} />
+            </div>
             <h3 className="font-bold text-sm">Defeito Relatado</h3>
           </div>
           {editingField !== 'defect' ? (
-            <button onClick={() => setEditingField('defect')} className="text-red-600 p-2 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+            <button onClick={() => setEditingField('defect')} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
               <Edit3 size={18} />
             </button>
           ) : (
             <div className="flex gap-2">
-              <button onClick={handleCancel} className="p-2 text-slate-400"><X size={20} /></button>
-              <button onClick={handleSave} className="p-2 text-red-600"><Save size={20} /></button>
+              <button onClick={handleCancel} className="p-1.5 text-slate-400"><X size={20} /></button>
+              <button onClick={handleSave} className="p-1.5 text-green-600"><Check size={20} /></button>
             </div>
           )}
         </div>
         
-        <div className={`p-4 rounded-xl border transition-all ${editingField === 'defect' ? 'bg-white border-red-200 ring-4 ring-red-50' : 'bg-red-50/50 border-red-100'}`}>
+        <div className={`p-5 rounded-2xl border transition-all ${editingField === 'defect' ? 'bg-white border-red-200 ring-4 ring-red-50' : 'bg-red-50/40 border-red-100/50'}`}>
           {editingField === 'defect' ? (
             <textarea 
-              className="w-full bg-transparent border-none text-base font-bold text-red-800 outline-none resize-none min-h-[100px]"
+              className="w-full bg-transparent border-none text-base font-black text-red-700 outline-none resize-none min-h-[80px]"
               value={formData.reportedDefect}
               onChange={(e) => setFormData({...formData, reportedDefect: e.target.value})}
-              placeholder="Descreva detalhadamente o problema relatado pelo cliente..."
+              autoFocus
             />
           ) : (
-            <p className="text-base font-bold text-red-800 leading-relaxed italic">
+            <p className="text-base font-black text-red-700 leading-relaxed italic text-center">
               "{os.reportedDefect}"
             </p>
           )}
+        </div>
+      </section>
+
+      {/* OUTRAS INFO */}
+      <section className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className={labelClasses}>Aparelho</label>
+            <p className="text-sm font-black text-slate-800 uppercase">{os.brand} {os.model}</p>
+          </div>
+          <div>
+            <label className={labelClasses}>IMEI / Serial</label>
+            <p className="text-xs font-mono font-bold text-slate-500">{os.imei || 'Não informado'}</p>
+          </div>
+          <div className="text-right">
+             <label className={labelClasses}>Cliente</label>
+             <p className="text-xs font-black text-slate-400 uppercase truncate">{os.customerName}</p>
+          </div>
         </div>
       </section>
     </div>
