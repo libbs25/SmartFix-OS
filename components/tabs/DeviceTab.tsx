@@ -1,9 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { ServiceOrder } from '../../types.ts';
-import { Smartphone, Lock, AlertTriangle, Edit3, Save, X, KeyRound, User, ChevronDown, Type, Grid3X3, Check } from 'lucide-react';
+import { Smartphone, Lock, AlertTriangle, Edit3, Save, X, KeyRound, Type, Grid3X3, Check } from 'lucide-react';
 import { PatternGrid } from '../PatternGrid.tsx';
-import { DEVICE_DATA, BRANDS } from '../../data/deviceData.ts';
 
 interface DeviceTabProps {
   os: ServiceOrder;
@@ -40,54 +39,56 @@ export const DeviceTab: React.FC<DeviceTabProps> = ({ os, onUpdate }) => {
     setEditingField('none');
   };
 
-  const labelClasses = "text-[10px] font-bold text-slate-400 uppercase mb-1 block tracking-wider";
-
   return (
     <div className="p-4 space-y-6 bg-slate-50 min-h-full animate-in fade-in duration-300 pb-32">
       
-      {/* SEÇÃO DA SENHA */}
-      <section className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+      {/* SEÇÃO DA SENHA - IGUAL AO PRINT */}
+      <section className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2 text-slate-700">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-              <Lock size={16} />
+          <div className="flex items-center gap-3 text-slate-700">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+              <Lock size={18} />
             </div>
             <h3 className="font-bold text-sm">Bloqueio do Aparelho</h3>
           </div>
           {editingField !== 'password' ? (
             <button 
               onClick={() => setEditingField('password')} 
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black border border-blue-100 uppercase tracking-widest shadow-sm active:scale-95 transition-all"
+              className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black border border-blue-100 uppercase tracking-widest shadow-sm"
             >
-              <KeyRound size={14} />
-              Redefinir
+              Alterar
             </button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <button onClick={handleCancel} className="p-2 text-slate-400"><X size={20} /></button>
-              <button onClick={handleSave} className="px-5 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">OK</button>
+              <button 
+                onClick={handleSave} 
+                className="px-6 py-2 bg-[#2563eb] text-white rounded-xl font-black text-xs uppercase shadow-md shadow-blue-200 active:scale-95 transition-all"
+              >
+                OK
+              </button>
             </div>
           )}
         </div>
 
         {editingField === 'password' && (
-          <div className="flex gap-2 mb-8 animate-in slide-in-from-top duration-300">
+          <div className="flex gap-2 mb-8 p-1 bg-slate-50 rounded-2xl border border-slate-100">
             <button 
               onClick={() => setFormData({...formData, passwordType: 'text', password: ''})}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 border transition-all ${formData.passwordType === 'text' ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100'}`}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all ${formData.passwordType === 'text' ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400'}`}
             >
-              <Type size={14} /> Teclado
+              <Type size={14} /> Letras/Números
             </button>
             <button 
               onClick={() => setFormData({...formData, passwordType: 'pattern', password: ''})}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 border transition-all ${formData.passwordType === 'pattern' ? 'bg-blue-600 text-white border-blue-700 shadow-md' : 'bg-slate-50 text-slate-400 border-slate-100'}`}
+              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all ${formData.passwordType === 'pattern' ? 'bg-[#2563eb] text-white shadow-md' : 'text-slate-400'}`}
             >
-              <Grid3X3 size={14} /> Padrão
+              <Grid3X3 size={14} /> Desenho
             </button>
           </div>
         )}
 
-        <div className="relative min-h-[220px] flex flex-col items-center justify-center">
+        <div className="relative min-h-[250px] flex flex-col items-center justify-center py-4">
           {formData.passwordType === 'text' ? (
             editingField === 'password' ? (
               <input 
@@ -104,19 +105,17 @@ export const DeviceTab: React.FC<DeviceTabProps> = ({ os, onUpdate }) => {
               </p>
             )
           ) : (
-            <div className="py-4">
-              <PatternGrid 
-                pattern={editingField === 'password' ? formData.password : (os.password || '')} 
-                isEditing={editingField === 'password'}
-                onPatternChange={(newPattern) => setFormData({...formData, password: newPattern})}
-              />
-            </div>
+            <PatternGrid 
+              pattern={editingField === 'password' ? formData.password : (os.password || '')} 
+              isEditing={editingField === 'password'}
+              onPatternChange={(newPattern) => setFormData({...formData, password: newPattern})}
+            />
           )}
         </div>
       </section>
 
       {/* DEFEITO RELATADO */}
-      <section className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+      <section className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 text-red-500">
             <div className="p-1.5 bg-red-50 rounded-lg">
@@ -149,24 +148,6 @@ export const DeviceTab: React.FC<DeviceTabProps> = ({ os, onUpdate }) => {
               "{os.reportedDefect}"
             </p>
           )}
-        </div>
-      </section>
-
-      {/* OUTRAS INFO */}
-      <section className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <label className={labelClasses}>Aparelho</label>
-            <p className="text-sm font-black text-slate-800 uppercase">{os.brand} {os.model}</p>
-          </div>
-          <div>
-            <label className={labelClasses}>IMEI / Serial</label>
-            <p className="text-xs font-mono font-bold text-slate-500">{os.imei || 'Não informado'}</p>
-          </div>
-          <div className="text-right">
-             <label className={labelClasses}>Cliente</label>
-             <p className="text-xs font-black text-slate-400 uppercase truncate">{os.customerName}</p>
-          </div>
         </div>
       </section>
     </div>
