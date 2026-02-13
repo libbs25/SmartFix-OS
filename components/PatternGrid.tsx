@@ -117,7 +117,8 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
       </div>
       
       {isEditing && (

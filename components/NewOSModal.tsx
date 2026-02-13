@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useMemo } from 'react';
-import { ServiceOrder, OSStatus } from '../types';
+import { ServiceOrder, OSStatus } from '../types.ts';
 import { X, User, Smartphone, AlertCircle, Save, Hash, Camera, Trash2, Calendar, ChevronDown, Lock, Type, Grid3X3 } from 'lucide-react';
-import { DEVICE_DATA, BRANDS } from '../data/deviceData';
-import { PatternGrid } from './PatternGrid';
+import { DEVICE_DATA, BRANDS } from '../data/deviceData.ts';
+import { PatternGrid } from './PatternGrid.tsx';
 
 interface NewOSModalProps {
   onClose: () => void;
