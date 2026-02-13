@@ -1,5 +1,5 @@
 {
-  "name": "SmartFix OS - Gestão de Consertos",
+  "name": "SmartFix OS",
   "description": "Um aplicativo completo para gerenciar ordens de serviço de assistência técnica de celulares, com checklist, galeria de fotos e acompanhamento de status.",
   "requestFramePermissions": [
     "camera"
