@@ -8,11 +8,11 @@ export enum OSStatus {
 }
 
 export interface OSChecklist {
-  powersOn: boolean;
-  mainFunctionsTested: boolean;
-  partReplaced: boolean;
-  cleaned: boolean;
-  finalApproval: boolean;
+  touchDisplay: boolean;
+  wifiBluetooth: boolean;
+  cameras: boolean;
+  micAudio: boolean;
+  charging: boolean;
 }
 
 export interface ServiceOrder {

@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface PatternGridProps {
   pattern: string;
@@ -15,50 +15,44 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
   const points = Array.from({ length: 9 }, (_, i) => i + 1);
   const selectedPoints = pattern ? pattern.split(',').map(Number) : [];
 
-  const getPointCoords = (point: number) => {
+  const getPointCoords = useCallback((point: number) => {
     const row = Math.floor((point - 1) / 3);
     const col = (point - 1) % 3;
-    // Espaçamento de 70px entre centros
-    return { x: col * 75 + 35, y: row * 75 + 35 };
-  };
+    // Baseado num container de ~200px
+    return { x: col * 65 + 32, y: row * 65 + 32 };
+  }, []);
 
-  const updatePattern = (clientX: number, clientY: number) => {
+  const updatePattern = useCallback((clientX: number, clientY: number) => {
     if (!containerRef.current || !onPatternChange) return;
-    
     const rect = containerRef.current.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-    
     setCurrentPos({ x, y });
 
-    // Detecção de proximidade (Hitbox de 30px)
+    // Hitbox generosa de 28px para técnicos com luva
     for (let i = 1; i <= 9; i++) {
       const pCoord = getPointCoords(i);
       const dist = Math.sqrt(Math.pow(x - pCoord.x, 2) + Math.pow(y - pCoord.y, 2));
-      
-      if (dist < 30 && !selectedPoints.includes(i)) {
-        const newPattern = selectedPoints.length === 0 ? i.toString() : [...selectedPoints, i].join(',');
-        onPatternChange(newPattern);
-        if ('vibrate' in navigator) navigator.vibrate(15);
+      if (dist < 28 && !selectedPoints.includes(i)) {
+        onPatternChange(selectedPoints.length === 0 ? i.toString() : [...selectedPoints, i].join(','));
+        if ('vibrate' in navigator) navigator.vibrate(12);
         break;
       }
     }
-  };
+  }, [getPointCoords, onPatternChange, selectedPoints]);
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isEditing || !onPatternChange) return;
-    e.preventDefault(); // Impede scroll
-    setIsDragging(true);
-    
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setIsDragging(true);
     updatePattern(clientX, clientY);
   };
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDragging || !isEditing) return;
-    e.preventDefault(); // Impede scroll enquanto desenha
-    
+    // Crucial: impede o scroll do celular enquanto desenha
+    if (e.cancelable) e.preventDefault();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     updatePattern(clientX, clientY);
@@ -70,12 +64,11 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
   };
 
   useEffect(() => {
-    const handleGlobalEnd = () => handleEnd();
-    window.addEventListener('mouseup', handleGlobalEnd);
-    window.addEventListener('touchend', handleGlobalEnd);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchend', handleEnd);
     return () => {
-      window.removeEventListener('mouseup', handleGlobalEnd);
-      window.removeEventListener('touchend', handleGlobalEnd);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchend', handleEnd);
     };
   }, []);
 
@@ -87,7 +80,7 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
         onTouchStart={handleStart}
         onMouseMove={handleMove}
         onTouchMove={handleMove}
-        className="relative w-[220px] h-[220px] select-none touch-none bg-white rounded-3xl border-2 border-dashed border-slate-100 p-2"
+        className="relative w-[195px] h-[195px] select-none touch-none"
         style={{ touchAction: 'none' }}
       >
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
@@ -101,33 +94,13 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
 
             return (
               <g key={`pattern-line-${i}`}>
-                <line
-                  x1={start.x} y1={start.y}
-                  x2={end.x} y2={end.y}
-                  stroke="#086788"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                />
-                <path 
-                  d="M -5 -5 L 5 0 L -5 5 z" 
-                  fill="#ffffff"
-                  transform={`translate(${midX}, ${midY}) rotate(${angle * 180 / Math.PI})`}
-                />
+                <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="#086788" strokeWidth="7" strokeLinecap="round" />
+                <path d="M -4 -4 L 4 0 L -4 4 z" fill="#ffffff" transform={`translate(${midX}, ${midY}) rotate(${angle * 180 / Math.PI})`} />
               </g>
             );
           })}
-          
           {isDragging && selectedPoints.length > 0 && currentPos && (
-            <line
-              x1={getPointCoords(selectedPoints[selectedPoints.length - 1]).x}
-              y1={getPointCoords(selectedPoints[selectedPoints.length - 1]).y}
-              x2={currentPos.x}
-              y2={currentPos.y}
-              stroke="#086788"
-              strokeWidth="4"
-              strokeDasharray="5,5"
-              opacity="0.4"
-            />
+            <line x1={getPointCoords(selectedPoints[selectedPoints.length - 1]).x} y1={getPointCoords(selectedPoints[selectedPoints.length - 1]).y} x2={currentPos.x} y2={currentPos.y} stroke="#086788" strokeWidth="3" strokeDasharray="4,4" opacity="0.4" />
           )}
         </svg>
 
@@ -136,14 +109,8 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
             const isSelected = selectedPoints.includes(point);
             return (
               <div key={point} className="flex items-center justify-center">
-                <div
-                  className={`w-16 h-16 rounded-full border-2 transition-all duration-200 flex items-center justify-center shadow-sm ${
-                    isSelected
-                      ? 'border-[#086788] bg-[#086788]'
-                      : 'border-[#92d5e6] bg-white'
-                  }`}
-                >
-                  <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-[#92d5e6]'}`} />
+                <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-[#086788] bg-[#086788]' : 'border-[#92d5e6] bg-transparent'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#92d5e6]'}`} />
                 </div>
               </div>
             );
@@ -154,8 +121,8 @@ export const PatternGrid: React.FC<PatternGridProps> = ({ pattern, onPatternChan
       {isEditing && selectedPoints.length > 0 && (
         <button 
           type="button"
-          onClick={() => onPatternChange?.('')}
-          className="mt-6 px-6 py-2 bg-red-50 text-red-500 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border border-red-100 shadow-sm active:scale-95 transition-all"
+          onClick={(e) => { e.stopPropagation(); onPatternChange?.(''); }}
+          className="mt-6 px-6 py-2 bg-[#fff1f2] text-[#be123c] rounded-full text-[10px] font-black uppercase tracking-[0.1em] border border-[#fecdd3] shadow-sm active:scale-95 transition-all"
         >
           LIMPAR DESENHO
         </button>

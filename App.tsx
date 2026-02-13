@@ -7,33 +7,7 @@ import { StoreProfile } from './components/StoreProfile.tsx';
 import { LoginScreen } from './components/LoginScreen.tsx';
 import { ServiceOrder, OSStatus } from './types.ts';
 import { Language, t } from './i18n.ts';
-import { Search, Plus, LogOut, RefreshCcw, Wrench, AlertTriangle, X } from 'lucide-react';
-
-const MOCK_DATA: ServiceOrder[] = [
-  {
-    id: '1',
-    osNumber: '5651',
-    customerName: 'Jonatas Oliveira',
-    deviceType: 'celular',
-    brand: 'Apple',
-    model: 'iPhone 11',
-    imei: '860870078592529',
-    passwordType: 'text',
-    reportedDefect: 'Troca de Tela 2ª Linha',
-    status: OSStatus.MAINTENANCE,
-    notes: '',
-    photos: [],
-    checklist: {
-      powersOn: true,
-      mainFunctionsTested: false,
-      partReplaced: true,
-      cleaned: true,
-      finalApproval: false,
-    },
-    createdAt: new Date().toISOString(),
-    expectedDeliveryDate: new Date(Date.now() - 3600000).toISOString(),
-  }
-];
+import { Search, Plus, LogOut, RefreshCcw, Wrench } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -47,12 +21,11 @@ const App: React.FC = () => {
   const [orders, setOrders] = useState<ServiceOrder[]>(() => {
     try {
       const saved = localStorage.getItem('smartfix_orders');
-      if (!saved) return MOCK_DATA;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : MOCK_DATA;
+      if (!saved) return [];
+      return JSON.parse(saved);
     } catch (e) {
       console.error("Erro ao carregar ordens:", e);
-      return MOCK_DATA;
+      return [];
     }
   });
   
@@ -70,7 +43,6 @@ const App: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'Todas' | 'Em Aberto' | 'Adiantados'>('Todas');
   const [searchTerm, setSearchTerm] = useState('');
-  const [notification, setNotification] = useState<{message: string, type: 'warning'} | null>(null);
   
   const [language, setLanguage] = useState<Language>(() => {
     try {
@@ -99,9 +71,9 @@ const App: React.FC = () => {
 
   const [storeName, setStoreName] = useState<string>(() => {
     try {
-      return localStorage.getItem('smartfix_store_name') || 'Minha Loja';
+      return localStorage.getItem('smartfix_store_name') || 'SmartFix Tech';
     } catch {
-      return 'Minha Loja';
+      return 'SmartFix Tech';
     }
   });
 
@@ -114,17 +86,12 @@ const App: React.FC = () => {
   }, [nextOSConfig]);
 
   useEffect(() => {
-    localStorage.setItem('smartfix_lang', language);
-  }, [language]);
+    localStorage.setItem('smartfix_theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   useEffect(() => {
-    localStorage.setItem('smartfix_theme', isDarkMode ? 'dark' : 'light');
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    localStorage.setItem('smartfix_lang', language);
+  }, [language]);
 
   const handleLogin = (name?: string) => {
     if (name) {
@@ -160,14 +127,10 @@ const App: React.FC = () => {
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(orders)) return [];
     return orders.filter(o => {
-      const safeCustomerName = o.customerName || '';
-      const safeOSNumber = o.osNumber || '';
-      const safeModel = o.model || '';
-
       const matchesSearch = 
-        safeCustomerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        safeOSNumber.includes(searchTerm) ||
-        safeModel.toLowerCase().includes(searchTerm.toLowerCase());
+        (o.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.osNumber || '').includes(searchTerm) ||
+        (o.model || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       if (!matchesSearch) return false;
       
@@ -178,9 +141,11 @@ const App: React.FC = () => {
     });
   }, [orders, searchTerm, activeFilter]);
 
-  const countTodas = orders.filter(o => o.status !== OSStatus.DELIVERED).length;
-  const countEmAberto = orders.filter(o => o.status === OSStatus.READY).length;
-  const countAdiantados = orders.filter(o => o.status === OSStatus.OPEN).length;
+  const counts = useMemo(() => ({
+    todas: orders.filter(o => o.status !== OSStatus.DELIVERED).length,
+    aberto: orders.filter(o => o.status === OSStatus.READY).length,
+    adiantados: orders.filter(o => o.status === OSStatus.OPEN).length
+  }), [orders]);
 
   if (!isLoggedIn) {
     return (
@@ -196,20 +161,9 @@ const App: React.FC = () => {
 
   return (
     <div className={`max-w-md mx-auto min-h-screen flex flex-col shadow-2xl overflow-hidden font-sans relative transition-colors duration-300 ${isDarkMode ? 'bg-slate-900' : 'bg-[#f1f5f9]'}`}>
-      {notification && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-[200] animate-in fade-in slide-in-from-top duration-500">
-          <div className="bg-amber-600 text-white p-4 rounded-2xl shadow-2xl flex items-start gap-3 border border-amber-500/50">
-            <div className="bg-white/20 p-2 rounded-xl"><AlertTriangle size={20} /></div>
-            <div className="flex-1">
-              <p className="text-xs font-black uppercase tracking-widest mb-1">Notificação</p>
-              <p className="text-sm font-bold leading-tight">{notification.message}</p>
-            </div>
-            <button onClick={() => setNotification(null)} className="p-1 hover:bg-white/10 rounded-lg"><X size={18} /></button>
-          </div>
-        </div>
-      )}
-
-      {isProfileOpen ? (
+      {selectedOS ? (
+        <OSDetail os={selectedOS} onBack={() => setSelectedOS(null)} onUpdate={updateOS} />
+      ) : isProfileOpen ? (
         <StoreProfile 
           onBack={() => setIsProfileOpen(false)} 
           language={language} 
@@ -227,8 +181,6 @@ const App: React.FC = () => {
           nextOSNumber={nextOSConfig}
           setNextOSNumber={setNextOSConfig}
         />
-      ) : selectedOS ? (
-        <OSDetail os={selectedOS} onBack={() => setSelectedOS(null)} onUpdate={updateOS} />
       ) : (
         <>
           <header className={`p-4 sticky top-0 z-20 transition-colors ${isDarkMode ? 'bg-slate-800 border-b border-slate-700 shadow-sm' : 'bg-[#f1f5f9]'}`}>
@@ -243,15 +195,20 @@ const App: React.FC = () => {
                   <Wrench size={20} />
                 </button>
                 <div>
-                  <h1 className={`text-xl font-bold leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Minhas OS</h1>
-                  <p className="text-xs text-slate-400 font-medium">Olá, {storeName}</p>
+                  <h1 className={`text-xl font-black leading-none mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>SmartFix</h1>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{storeName}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"><RefreshCcw size={18} /></button>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="p-2.5 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  <RefreshCcw size={18} />
+                </button>
                 <button 
                   onClick={handleLogout}
-                  className="p-2.5 bg-[#ef4444] text-white rounded-xl shadow-lg active:scale-95 transition-all"
+                  className="p-2.5 bg-red-500 text-white rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   <LogOut size={18} />
                 </button>
@@ -259,26 +216,23 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-              <button onClick={() => setActiveFilter('Todas')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm border ${activeFilter === 'Todas' ? 'bg-[#2563eb] text-white border-blue-600' : (isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-white text-slate-500 border-slate-100')}`}>
-                <div className={`w-2 h-2 rounded-full ${activeFilter === 'Todas' ? 'bg-white' : 'bg-blue-600'}`} />
-                Todas <span className={`ml-1 text-[10px] ${activeFilter === 'Todas' ? 'text-white/80' : 'text-slate-400'}`}>{countTodas}</span>
+              <button onClick={() => setActiveFilter('Todas')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black transition-all whitespace-nowrap shadow-sm border ${activeFilter === 'Todas' ? 'bg-[#2563eb] text-white border-blue-600' : (isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-white text-slate-500 border-slate-100')}`}>
+                Todas <span className={`ml-1 ${activeFilter === 'Todas' ? 'text-white/80' : 'text-slate-400'}`}>{counts.todas}</span>
               </button>
-              <button onClick={() => setActiveFilter('Em Aberto')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm border ${activeFilter === 'Em Aberto' ? 'bg-[#2563eb] text-white border-blue-600' : (isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-white text-slate-500 border-slate-100')}`}>
-                <div className={`w-2 h-2 rounded-full ${activeFilter === 'Em Aberto' ? 'bg-white' : 'bg-blue-500'}`} />
-                Em Aberto <span className={`ml-1 text-[10px] ${activeFilter === 'Em Aberto' ? 'text-white/80' : 'text-slate-400'}`}>{countEmAberto}</span>
+              <button onClick={() => setActiveFilter('Em Aberto')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black transition-all whitespace-nowrap shadow-sm border ${activeFilter === 'Em Aberto' ? 'bg-[#2563eb] text-white border-blue-600' : (isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-white text-slate-500 border-slate-100')}`}>
+                Em Aberto <span className={`ml-1 ${activeFilter === 'Em Aberto' ? 'text-white/80' : 'text-slate-400'}`}>{counts.aberto}</span>
               </button>
-              <button onClick={() => setActiveFilter('Adiantados')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap shadow-sm border ${activeFilter === 'Adiantados' ? 'bg-[#2563eb] text-white border-blue-600' : (isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-white text-slate-500 border-slate-100')}`}>
-                <div className={`w-2 h-2 rounded-full ${activeFilter === 'Adiantados' ? 'bg-white' : 'bg-purple-500'}`} />
-                Pré-apr <span className={`ml-1 text-[10px] ${activeFilter === 'Adiantados' ? 'text-white/80' : 'text-slate-400'}`}>{countAdiantados}</span>
+              <button onClick={() => setActiveFilter('Adiantados')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black transition-all whitespace-nowrap shadow-sm border ${activeFilter === 'Adiantados' ? 'bg-[#2563eb] text-white border-blue-600' : (isDarkMode ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-white text-slate-500 border-slate-100')}`}>
+                Adiantados <span className={`ml-1 ${activeFilter === 'Adiantados' ? 'text-white/80' : 'text-slate-400'}`}>{counts.adiantados}</span>
               </button>
             </div>
 
-            <div className="mt-4 relative group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+            <div className="mt-4 relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input 
                 type="text" 
-                placeholder={t(language, 'searchPlaceholder')} 
-                className={`w-full pl-10 pr-4 py-3 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium border ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-100 text-slate-800 shadow-sm'}`} 
+                placeholder="Buscar por OS, cliente ou aparelho..." 
+                className={`w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all placeholder:text-slate-400 font-bold border ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-100 text-slate-800 shadow-sm'}`} 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
               />
@@ -289,8 +243,8 @@ const App: React.FC = () => {
             <OSList orders={filteredOrders} onSelectOS={setSelectedOS} />
           </main>
 
-          <button onClick={() => setIsCreating(true)} className="fixed bottom-8 right-6 w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:bg-blue-700 active:scale-90 transition-all z-[40]">
-            <Plus size={32} strokeWidth={2.5} />
+          <button onClick={() => setIsCreating(true)} className="fixed bottom-8 right-6 w-16 h-16 bg-blue-600 text-white rounded-[2rem] shadow-2xl flex items-center justify-center hover:bg-blue-700 active:scale-90 transition-all z-[40]">
+            <Plus size={36} strokeWidth={3} />
           </button>
         </>
       )}
